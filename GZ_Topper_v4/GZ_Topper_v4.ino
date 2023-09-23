@@ -1,3 +1,4 @@
+// NOTICE: This code is for use with GZ_LOGIC_Board Rev. 1A and GZ_Node_Board Rev. 2
 #include "MonsterMonitorInsert.h"
 #include "CityInsert.h"
 #include <Adafruit_NeoPixel.h>
@@ -14,33 +15,33 @@ Adafruit_NeoPixel neopixel = Adafruit_NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, NEO_GRB
 Mux mux(Pin(A4, INPUT, PinType::Analog), Pinset(A0, A1, A2, A3));
 
 // Monster Inserts
-MonsterMonitorInsert tankInsert = MonsterMonitorInsert(0, 5);
-MonsterMonitorInsert kaijuInsert = MonsterMonitorInsert(1, 6);
-MonsterMonitorInsert bridgeInsert = MonsterMonitorInsert(2, 7);
-MonsterMonitorInsert powerlineInsert = MonsterMonitorInsert(3, 8);
+MonsterMonitorInsert tankInsert = MonsterMonitorInsert(4, 3);
+MonsterMonitorInsert kaijuInsert = MonsterMonitorInsert(5, 5);
+MonsterMonitorInsert bridgeInsert = MonsterMonitorInsert(6, 7);
+MonsterMonitorInsert powerlineInsert = MonsterMonitorInsert(7, 11);
 
 //City Inserts
-CityInsert ny = CityInsert(4, 600);
-CityInsert london = CityInsert(5, 600);
-CityInsert paris = CityInsert(6, 600);
-CityInsert tokyo = CityInsert(7, 600);
+CityInsert paris = CityInsert(0, 600);
+CityInsert tokyo = CityInsert(1, 600);
+CityInsert ny = CityInsert(2, 600);
+CityInsert london = CityInsert(3, 600);
 
-//heatWave, activated by middle spinner
-CityInsert heatWave = CityInsert(9, 300);
+//heatRay, activated by middle spinner
+CityInsert heatRay = CityInsert(15, 300);
 
 //GI - used for all fire animation trigger
 CityInsert redGI = CityInsert(10, 2000, 600);
 CityInsert whiteGI = CityInsert(11, 0, 200);
 bool destructionAnimationOn = false;
 
-CityInsert saucer = CityInsert(12, 900, 800);
+CityInsert saucer = CityInsert(9, 900, 800);
 
 //  rodan insert
-CityInsert rodan = CityInsert(13, 5000);
+CityInsert rodan = CityInsert(8, 5000);
 #define NUM_ANIMATION  15
 
-// planetX
-CityInsert planetX = CityInsert(8, 1400, 1200);
+// saucerAttack
+CityInsert saucerAttack = CityInsert(9, 1400, 1200);
 #define SERVO_PIN    9
 #define SERVO_MIN 1000 // 1 ms pulse
 #define SERVO_MAX 2000 // 2 ms pulse
@@ -89,8 +90,6 @@ void loop() {
     neopixel.show();
   }
 
-  Serial.println(redGI.isAnimating);
-
   if (redGI.getStatus(mux) == cityInsertStatus::ON && whiteGI.getStatus(mux) != cityInsertStatus::ON) {  
     // allFire on
     neoPixelFireDisplayAll();
@@ -120,10 +119,10 @@ void loop() {
     bottomWhiteStripOn = false;
     setAllFirePanelsOn();
     rainbow();
-  } else if (heatWave.getStatus(mux) == cityInsertStatus::ON) {
+  } else if (heatRay.getStatus(mux) == cityInsertStatus::ON) {
     middleWhiteStripOn = false;
     setAllFirePanelsOn();
-    // heatwave light show
+    // heatRay light show
     if (millis() - previousMillis >= 100) {
       // save the last time you blinked the LED
       previousMillis = millis();
@@ -158,48 +157,43 @@ void loop() {
       illuminateMiddleStripWhite();
     }
       
-    if(ny.getStatus(mux) == cityInsertStatus::ON && heatWave.getStatus(mux) == cityInsertStatus::OFF) {
+    if(ny.getStatus(mux) == cityInsertStatus::ON && heatRay.getStatus(mux) == cityInsertStatus::OFF) {
       ny.lastFireMillis = neoPixelFireDisplay(100, 144, 153, ny);
-      ny.fireLightsOff = false;
-    } else if (heatWave.getStatus(mux) == cityInsertStatus::OFF && ny.fireLightsOff == false) {
+      ny.setTopperLightsActive(true);
+    } else if (heatRay.getStatus(mux) == cityInsertStatus::OFF && ny.topperLightsActive() == true) {
       neoPixelFireOff(144, 153);
-      ny.fireLightsOff = true;
+      ny.setTopperLightsActive(false);
     };
     
-    if(london.getStatus(mux) == cityInsertStatus::ON && heatWave.getStatus(mux) == cityInsertStatus::OFF) {
+    if(london.getStatus(mux) == cityInsertStatus::ON && heatRay.getStatus(mux) == cityInsertStatus::OFF) {
       london.lastFireMillis = neoPixelFireDisplay(100, 153, 162, london);
-      london.fireLightsOff = false;
-    } else if (heatWave.getStatus(mux) == cityInsertStatus::OFF && london.fireLightsOff == false) {
+      london.setTopperLightsActive(true);
+    } else if (heatRay.getStatus(mux) == cityInsertStatus::OFF && london.topperLightsActive() == true) {
       neoPixelFireOff(153, 162);
-      london.fireLightsOff = true;
+      london.setTopperLightsActive(false);
     };
 
-    if(paris.getStatus(mux) == cityInsertStatus::ON && heatWave.getStatus(mux) == cityInsertStatus::OFF) {
+    if(paris.getStatus(mux) == cityInsertStatus::ON && heatRay.getStatus(mux) == cityInsertStatus::OFF) {
       paris.lastFireMillis = neoPixelFireDisplay(100, 162, 171, paris);
-      paris.fireLightsOff = false;
-    } else if (heatWave.getStatus(mux) == cityInsertStatus::OFF && paris.fireLightsOff == false) {
+      paris.setTopperLightsActive(true);
+    } else if (heatRay.getStatus(mux) == cityInsertStatus::OFF && paris.topperLightsActive() == true) {
       neoPixelFireOff(162, 171);
-      paris.fireLightsOff = true;
+      paris.setTopperLightsActive(false);
     };
 
-    if(tokyo.getStatus(mux) == cityInsertStatus::ON && heatWave.getStatus(mux) == cityInsertStatus::OFF) {
+    if(tokyo.getStatus(mux) == cityInsertStatus::ON && heatRay.getStatus(mux) == cityInsertStatus::OFF) {
       tokyo.lastFireMillis = neoPixelFireDisplay(100, 171, 180, tokyo);
-      tokyo.fireLightsOff = false;
-    } else if (heatWave.getStatus(mux) == cityInsertStatus::OFF && tokyo.fireLightsOff == false) {
+      tokyo.setTopperLightsActive(true);
+    } else if (heatRay.getStatus(mux) == cityInsertStatus::OFF && tokyo.topperLightsActive() == false) {
       neoPixelFireOff(171, 180);
-      tokyo.fireLightsOff = true;
+      tokyo.setTopperLightsActive(false);
     };
   }
-  
-  // if (ufoUpPosition) {
-  //   servo.write(600);
-  //   ufoUpPosition = false;
-  // }
 
   if ((saucer.getStatus(mux) == cityInsertStatus::ON) && !ufoUpPosition) {
     servo.write(2400);
     ufoUpPosition = true;
-  } else if (saucer.getStatus(mux) == cityInsertStatus::OFF && planetX.getStatus(mux) == cityInsertStatus::OFF) {
+  } else if (saucer.getStatus(mux) == cityInsertStatus::OFF && saucerAttack.getStatus(mux) == cityInsertStatus::OFF) {
     servo.write(600);
     ufoUpPosition = false;
   }
@@ -301,10 +295,10 @@ void rainbow() {
 }
 
 void setAllFirePanelsOn() {
-  paris.fireLightsOff = false;
-  ny.fireLightsOff = false;
-  london.fireLightsOff = false;
-  tokyo.fireLightsOff = false;
+  paris.setTopperLightsActive(true);
+  ny.setTopperLightsActive(true);
+  london.setTopperLightsActive(true);
+  tokyo.setTopperLightsActive(true);
 }
 
 void pingPongAnimation() {
@@ -347,17 +341,6 @@ void pingPongAnimation() {
   }
   rodan.updateAnimationPos(animationPos);
 }
-
-// void saucerUpdate() {
-//   static bool isSaucerUp = false;
-//   if ((saucer.getStatus(mux) == cityInsertStatus::ON || planetX.getStatus(mux) == cityInsertStatus::ON) && isSaucerUp == false) {
-//     servo.write(2400);
-//     isSaucerUp == true;
-//   } else if ((saucer.getStatus(mux) == cityInsertStatus::OFF && planetX.getStatus(mux) == cityInsertStatus::OFF) && isSaucerUp == true) {
-//     servo.write(600);
-//     isSaucerUp = false;
-//   }
-// }
 
 void pingPongFireAnimation() {
   static int animationPos = 0;

@@ -4,10 +4,8 @@
 using namespace admux;
 
 MonsterMonitorInsert::MonsterMonitorInsert(byte insertIn, byte topperOut) {
-  // Anything you need when instantiating your object goes here
   _insertIn = insertIn;
   _topperOut = topperOut;
-  _blinkWait = 200;
   _lastTimeInsertOff = millis();
   _lastTimeInsertOn = 0;
   _currInsertState = insertState::OFF;
@@ -15,26 +13,27 @@ MonsterMonitorInsert::MonsterMonitorInsert(byte insertIn, byte topperOut) {
   pinMode(topperOut, OUTPUT);
 }
 
-// Pretend this is one or more complex and involved functions you have written
 void MonsterMonitorInsert::update(Mux mux) {
   switch (_currInsertState) {
     case insertState::OFF:
+      // initial check to see if the insert is lit
       if (getVoltageFromAnalogValue(mux.read(_insertIn)) > 4) {
-        // Serial.println("light pending");
         _currInsertState = insertState::PENDING;
         _lastTimeInsertOn = millis();
       }
       break;
     
     case insertState::PENDING:
-      // known working time 1600
+      // insert has been lit previously, we wanted to wait and check the insert status again in 600ms to
+      // ensure the statis is actually active vs the insert being lit due to one of
+      // many various in game light shows
       if (millis() - _lastTimeInsertOn > 600) {
         if(getVoltageFromAnalogValue(mux.read(_insertIn)) > 4) {
           digitalWrite(_topperOut, HIGH);
-          // Serial.println("light on");
           _currInsertState = insertState::ON;
           _lastTimeInsertOff = millis();
         } else {
+          // insert wasn't lit on recheck so lets set the state to OFF
           _currInsertState = insertState::OFF;
         }
 
@@ -42,14 +41,15 @@ void MonsterMonitorInsert::update(Mux mux) {
       break;
 
     case insertState::ON:
+      // when the insert is the active state on the playfield, the insert actually pulses
+      // vs being a solid light, this logic helps us determine if the insert is off or just
+      // pulsing
       if (mux.read(_insertIn) < 800) {
         if (millis() - _lastTimeInsertOff > 200) {
-          // Serial.println("light off");
           digitalWrite(_topperOut, LOW);
           _currInsertState = insertState::OFF;
         }
       } else if (mux.read(_insertIn) > 800) {
-        // Serial.println("restart timer");
         _lastTimeInsertOff = millis();
       }
       break;

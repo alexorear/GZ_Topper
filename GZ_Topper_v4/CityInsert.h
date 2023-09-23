@@ -19,13 +19,13 @@ class CityInsert {
     // Methods
     cityInsertStatus getStatus(Mux mux);
     void updateAnimationPos(int pos);
+    void setIsAnimation(bool isAnimating);
     int getAnimationPos();
+    bool topperLightsActive();
+    void setTopperLightsActive(bool active);
     
     // variables
     unsigned long lastFireMillis;
-    bool fireLightsOff;
-    int pendingDelay;
-    bool isAnimating;
 
   private:
     // Methods
@@ -39,5 +39,6 @@ class CityInsert {
     int _pendingDelay;
     int _timeOffOffset;
     int _animationPos;
+    bool _topperLightsActive;
 };
 #endif

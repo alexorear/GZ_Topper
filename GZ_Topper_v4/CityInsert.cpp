@@ -9,12 +9,9 @@ CityInsert::CityInsert(byte insertIn, int pending, int timeOffOffset = 200) {
     _cityInsertStatus = cityInsertStatus::OFF;
     _lastTimeInsertOff = 0;
     _pendingDelay = pending;
-    pendingDelay = pending;
-    lastFireMillis = 0;
-    fireLightsOff = true; //read and modified by main loop code
     _animationPos = 0;
     _timeOffOffset = timeOffOffset;
-    isAnimating = false;
+    _topperLightsActive = false;
 }
 
 cityInsertStatus CityInsert::getStatus(Mux mux) {
@@ -70,4 +67,12 @@ void CityInsert::updateAnimationPos(int pos) {
 
 int CityInsert::getAnimationPos() {
   return _animationPos;
+}
+
+void CityInsert::setTopperLightsActive(bool active) {
+  _topperLightsActive = active;
+}
+
+bool CityInsert::topperLightsActive() {
+  return _topperLightsActive;
 }
