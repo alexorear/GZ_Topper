@@ -62,12 +62,11 @@ void setup() {
     Serial.begin(9600);
     // ufo setup
     servo.attach(SERVO_PIN, SERVO_MIN, SERVO_MAX);
-    // GI setup
-    pinMode(2, OUTPUT);
+
+    // RGB setup
     neopixel.begin();
     neopixel.clear();
     neopixel.show();
-    digitalWrite(2, HIGH);
 }
 
 void loop() {
@@ -76,22 +75,17 @@ void loop() {
   bridgeInsert.update(mux);
   powerlineInsert.update(mux);
 
-  if (!bottomWhiteStripOn && 
+  if (bottomWhiteStripOn == false && 
     rodan.getStatus(mux) == cityInsertStatus::OFF && 
-    !(tankInsert.getState() == insertState::ON &&
-    kaijuInsert.getState() == insertState::ON && 
-    bridgeInsert.getState() == insertState::ON && 
-    powerlineInsert.getState() == insertState::ON) &&
-    !(redGI.getStatus(mux) == cityInsertStatus::ON && whiteGI.getStatus(mux) != cityInsertStatus::ON) &&
+    allMonsterMonitorsLit() == false &&
+    !(redGI.getStatus(mux) == cityInsertStatus::ON && whiteGI.getStatus(mux) == cityInsertStatus::OFF) &&
     !destructionAnimationOn) {
     // white on bottom strip only
-    neopixel.fill(neopixel.Color(255, 200, 150), 0, 72);
-    bottomWhiteStripOn = true;
-    neopixel.show();
+    illuminateBottomStripWhite();
   }
 
-  if (redGI.getStatus(mux) == cityInsertStatus::ON && whiteGI.getStatus(mux) != cityInsertStatus::ON) {  
-    // allFire on
+  if (redGI.getStatus(mux) == cityInsertStatus::ON && whiteGI.getStatus(mux) == cityInsertStatus::OFF) {  
+    // allFire on for Destruction Jackpot
     neoPixelFireDisplayAll();
     if (millis() - previousMillis >= 15) {
         previousMillis = millis();
@@ -111,10 +105,7 @@ void loop() {
     setAllFirePanelsOn();
     bottomWhiteStripOn = false;
     middleWhiteStripOn = false;
-  } else if(tankInsert.getState() == insertState::ON &&
-    kaijuInsert.getState() == insertState::ON && 
-    bridgeInsert.getState() == insertState::ON && 
-    powerlineInsert.getState() == insertState::ON) {
+  } else if(allMonsterMonitorsLit() == true) {
     middleWhiteStripOn = false;
     bottomWhiteStripOn = false;
     setAllFirePanelsOn();
@@ -200,15 +191,15 @@ void loop() {
 }
 
 void illuminateMiddleStripWhite() {
-  neopixel.fill(neopixel.Color(75, 44, 36), 72, 72); // starts at light 72 and has a cout of 72, which would end on light 44
+  neopixel.fill(neopixel.Color(75, 44, 36), 72, 72); // starts at light 72 and has a count of 72, which would end on light 144
   neopixel.show();
   middleWhiteStripOn = true;
 }
 
 void illuminateBottomStripWhite() {
-  neopixel.fill(neopixel.Color(75, 44, 36), 72, 72); // starts at light 72 and has a cout of 72, which would end on light 44
+  neopixel.fill(neopixel.Color(255, 200, 150), 0, 72); // starts at light 0 and has a count of 72, which would end on light 72
   neopixel.show();
-  middleWhiteStripOn = true;
+  bottomWhiteStripOn = true;
 }
 
 unsigned long neoPixelFireDisplay(int delay, int firstPixel, int lastPixel, CityInsert insert) {
@@ -387,4 +378,45 @@ void pingPongFireAnimation() {
     neopixel.setPixelColor(144 - 1 - (animationPos + i), neopixel.Color(255, 0, 0)); // Set pixel in the mirrored position to purple
   }
   redGI.updateAnimationPos(animationPos);
+}
+
+bool allMonsterMonitorsLit() {
+ return (tankInsert.getState() == insertState::ON &&
+    kaijuInsert.getState() == insertState::ON && 
+    bridgeInsert.getState() == insertState::ON && 
+    powerlineInsert.getState() == insertState::ON);
+}
+
+void fadeRangeOfPixels(uint16_t startPixel, uint16_t endPixel, uint32_t startColor, uint32_t endColor, uint32_t duration) {
+  static uint32_t startMillis; // Static variable to store the start time
+
+  uint32_t currentMillis = millis();
+
+  if (currentMillis - startMillis >= duration) {
+    // Swap start and end colors and reset the timer
+    startColor = endColor;
+    endColor = neopixel.Color(0, 0, 0);
+    startMillis = currentMillis;
+  }
+
+  for (int i = startPixel; i <= endPixel; i++) {
+    uint32_t currentColor = getCurrentColor(startColor, endColor, startMillis, duration);
+    neopixel.setPixelColor(i, currentColor);
+  }
+
+  neopixel.show();
+}
+
+uint32_t getCurrentColor(uint32_t startColor, uint32_t endColor, uint32_t startTime, int fadeDuration) {
+  uint32_t currentTime = millis() - startTime;
+
+  if (currentTime >= fadeDuration) {
+    return endColor;
+  } else {
+    int progress = map(currentTime, 0, fadeDuration, 0, 100);
+    int r = ((startColor >> 16) & 0xFF) + progress * ((endColor >> 16) & 0xFF - (startColor >> 16) & 0xFF) / 100;
+    int g = ((startColor >> 8) & 0xFF) + progress * ((endColor >> 8) & 0xFF - (startColor >> 8) & 0xFF) / 100;
+    int b = (startColor & 0xFF) + progress * ((endColor) & 0xFF - (startColor & 0xFF)) / 100;
+    return neopixel.Color(r, g, b);
+  }
 }
