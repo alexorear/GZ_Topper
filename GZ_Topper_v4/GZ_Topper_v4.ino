@@ -26,6 +26,8 @@ CityInsert tokyo = CityInsert(1, 600);
 CityInsert ny = CityInsert(2, 600);
 CityInsert london = CityInsert(3, 600);
 
+CityInsert extraInsert = CityInsert(12, 600);
+
 //heatRay, activated by middle spinner
 CityInsert heatRay = CityInsert(15, 300);
 
@@ -63,6 +65,9 @@ void setup() {
     // ufo setup
     servo.attach(SERVO_PIN, SERVO_MIN, SERVO_MAX);
 
+    pinMode(2, OUTPUT);
+    pinMode(4, OUTPUT);
+
     // RGB setup
     neopixel.begin();
     neopixel.clear();
@@ -74,6 +79,19 @@ void loop() {
   kaijuInsert.update(mux);
   bridgeInsert.update(mux);
   powerlineInsert.update(mux);
+
+  //additional inputs for mux 13 and 15
+  if(extraInsert.getStatus(mux) == cityInsertStatus::ON) {
+    digitalWrite(2, HIGH);
+  } else {
+    digitalWrite(2, LOW);
+  }
+
+  if(mux.read(13) > 800) {
+    digitalWrite(4, HIGH);
+  } else {
+    digitalWrite(4, LOW);
+  }
 
   if (bottomWhiteStripOn == false && 
     rodan.getStatus(mux) == cityInsertStatus::OFF && 
@@ -111,7 +129,7 @@ void loop() {
     setAllFirePanelsOn();
     rainbow();
   } else if (heatRay.getStatus(mux) == cityInsertStatus::ON) {
-    middleWhiteStripOn = false;
+    middleWhiteStripOn = true;
     setAllFirePanelsOn();
     // heatRay light show
     if (millis() - previousMillis >= 100) {
@@ -126,9 +144,11 @@ void loop() {
       } else {
         ledState = LOW;
         for(int i = 72; i < neopixel.numPixels(); i++) {
-          neopixel.setPixelColor(i, 13, 35, 50);
+          neopixel.setPixelColor(i, 13, 35, 100);
         }
       }
+      // neoPixelBlueFireDisplayAll();
+
 
       //set bottom strip to white
       neopixel.fill(neopixel.Color(255, 200, 150), 0, 72);
@@ -175,7 +195,7 @@ void loop() {
     if(tokyo.getStatus(mux) == cityInsertStatus::ON && heatRay.getStatus(mux) == cityInsertStatus::OFF) {
       tokyo.lastFireMillis = neoPixelFireDisplay(100, 171, 180, tokyo);
       tokyo.setTopperLightsActive(true);
-    } else if (heatRay.getStatus(mux) == cityInsertStatus::OFF && tokyo.topperLightsActive() == false) {
+    } else if (heatRay.getStatus(mux) == cityInsertStatus::OFF && tokyo.topperLightsActive() == true) {
       neoPixelFireOff(171, 180);
       tokyo.setTopperLightsActive(false);
     };
@@ -197,7 +217,7 @@ void illuminateMiddleStripWhite() {
 }
 
 void illuminateBottomStripWhite() {
-  neopixel.fill(neopixel.Color(255, 200, 150), 0, 72); // starts at light 0 and has a count of 72, which would end on light 72
+  neopixel.fill(neopixel.Color(225, 132, 108), 0, 72); // starts at light 0 and has a count of 72, which would end on light 72
   neopixel.show();
   bottomWhiteStripOn = true;
 }
@@ -241,6 +261,28 @@ unsigned long neoPixelFireDisplayAll() {
   }
 }
 
+unsigned long neoPixelBlueFireDisplayAll() {
+  if (millis() - previousStripFire > 100) {
+    int r = 100, g = 150, b = 255;
+
+    for(int i = 72; i < neopixel.numPixels(); i++) {
+      int flicker = random(15,130);
+      int r1 = r-flicker;
+      int g1 = g-flicker;
+      int b1 = b-flicker;
+      if(g1<0) g1=0;
+      if(r1<0) r1=0;
+      if(b1<0) b1=0;
+      neopixel.setPixelColor(i,r1,g1, b1);
+    }
+    neopixel.fill(neopixel.Color(255, 200, 150), 0, 72);
+    bottomWhiteStripOn = true;
+    neopixel.show();
+    // neopixel.show();
+    previousStripFire = millis();
+  }
+}
+
 void neoPixelFireOff(int firstPixel, int lastPixel) {
   for(int i = firstPixel; i < lastPixel; i++) {
     neopixel.setPixelColor(i, 0, 0, 0);
@@ -253,7 +295,7 @@ void rainbow() {
   static uint16_t rainbowJ = 0;
   static uint16_t rainbowI = 0;
 
-  if (millis() - previousRainbow >= 100) {
+  if (millis() - previousRainbow >= 150) {
     // save the last time you blinked the LED
     previousRainbow = millis();
     if (rainbowI == 0) {
