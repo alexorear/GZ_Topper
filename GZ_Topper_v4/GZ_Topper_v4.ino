@@ -36,7 +36,9 @@ CityInsert redGI = CityInsert(10, 2000, 600);
 CityInsert whiteGI = CityInsert(11, 0, 200);
 bool destructionAnimationOn = false;
 
-CityInsert saucer = CityInsert(9, 900, 800);
+CityInsert saucer = CityInsert(9, 600, 800);
+unsigned long gameInPlayTime = 0;
+bool gameInPlay = false;
 
 //  rodan insert
 CityInsert rodan = CityInsert(8, 5000);
@@ -79,6 +81,8 @@ void loop() {
   kaijuInsert.update(mux);
   bridgeInsert.update(mux);
   powerlineInsert.update(mux);
+
+  updateGameInPlayStatus();
 
   //additional inputs for mux 13 and 15
   if(extraInsert.getStatus(mux) == cityInsertStatus::ON) {
@@ -129,7 +133,7 @@ void loop() {
     setAllFirePanelsOn();
     rainbow();
   } else if (heatRay.getStatus(mux) == cityInsertStatus::ON) {
-    middleWhiteStripOn = true;
+    middleWhiteStripOn = false;
     setAllFirePanelsOn();
     // heatRay light show
     if (millis() - previousMillis >= 100) {
@@ -201,9 +205,15 @@ void loop() {
     };
   }
 
-  if ((saucer.getStatus(mux) == cityInsertStatus::ON) && !ufoUpPosition) {
-    servo.write(2400);
-    ufoUpPosition = true;
+// tokyo check is to keep saucer from only firing outside of gameplay
+  if (gameInPlay == true) {
+    if ((saucer.getStatus(mux) == cityInsertStatus::ON) && !ufoUpPosition) {
+      servo.write(2400);
+      ufoUpPosition = true;
+    } else if (saucer.getStatus(mux) == cityInsertStatus::OFF && saucerAttack.getStatus(mux) == cityInsertStatus::OFF) {
+      servo.write(600);
+      ufoUpPosition = false;
+    }
   } else if (saucer.getStatus(mux) == cityInsertStatus::OFF && saucerAttack.getStatus(mux) == cityInsertStatus::OFF) {
     servo.write(600);
     ufoUpPosition = false;
@@ -460,5 +470,26 @@ uint32_t getCurrentColor(uint32_t startColor, uint32_t endColor, uint32_t startT
     int g = ((startColor >> 8) & 0xFF) + progress * ((endColor >> 8) & 0xFF - (startColor >> 8) & 0xFF) / 100;
     int b = (startColor & 0xFF) + progress * ((endColor) & 0xFF - (startColor & 0xFF)) / 100;
     return neopixel.Color(r, g, b);
+  }
+}
+
+void updateGameInPlayStatus() {
+  if (tokyo.getStatus(mux) == cityInsertStatus::OFF) {
+    // Serial.println("tokyo off");
+    gameInPlayTime = 0;
+    gameInPlay = false;
+  }
+
+  if (gameInPlayTime == 0 && tokyo.getStatus(mux) == cityInsertStatus::ON) {
+    // Serial.println("tokyo on");
+    gameInPlayTime = millis();
+    // Serial.println(gameInPlayTime);
+  }
+
+  if (gameInPlayTime != 0 && (millis() - gameInPlayTime) >= 6000) {
+    if (tokyo.getStatus(mux) == cityInsertStatus::ON) {
+      gameInPlay = true;
+      // Serial.println(true);
+    }
   }
 }
