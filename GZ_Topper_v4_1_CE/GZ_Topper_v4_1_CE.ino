@@ -1,4 +1,10 @@
 // NOTICE: This code is for use with GZ_LOGIC_Board Rev. 1A and GZ_Node_Board Rev. 2
+
+/*
+Final Code with status outputs setup to work with latest version of CE hardware/software
+Date: 8/10/2024
+*/
+
 #include "MonsterMonitorInsert.h"
 #include "CityInsert.h"
 #include <Adafruit_NeoPixel.h>
@@ -36,7 +42,6 @@ CityInsert redGI = CityInsert(10, 2000, 600);
 CityInsert whiteGI = CityInsert(11, 0, 200);
 bool destructionAnimationOn = false;
 
-CityInsert saucer = CityInsert(9, 600, 800);
 unsigned long gameInPlayTime = 0;
 bool gameInPlay = false;
 
@@ -45,12 +50,13 @@ CityInsert rodan = CityInsert(8, 5000);
 #define NUM_ANIMATION  15
 
 // saucerAttack
+// CityInsert saucer = CityInsert(9, 600, 800);
 CityInsert saucerAttack = CityInsert(9, 1400, 1200);
 #define SERVO_PIN    9
 #define SERVO_MIN 1000 // 1 ms pulse
 #define SERVO_MAX 2000 // 2 ms pulse
 Adafruit_TiCoServo servo;
-bool ufoUpPosition = false;
+bool ufoUpPosition = true;
 
 //white GI strip bottom
 bool bottomWhiteStripOn = false;
@@ -67,8 +73,18 @@ void setup() {
     // ufo setup
     servo.attach(SERVO_PIN, SERVO_MIN, SERVO_MAX);
 
-    pinMode(2, OUTPUT);
+    // user mods
+    // pinMode(2, OUTPUT);
     pinMode(4, OUTPUT);
+
+    // CE Dest JP
+    pinMode(8, OUTPUT);
+    // CE Heat Ray
+    pinMode(6, OUTPUT);
+    // CE Rodan
+    pinMode(12, OUTPUT);
+    // CE UFO
+    pinMode(2, OUTPUT);
 
     // RGB setup
     neopixel.begin();
@@ -85,11 +101,11 @@ void loop() {
   updateGameInPlayStatus();
 
   //additional inputs for mux 13 and 15
-  if(extraInsert.getStatus(mux) == cityInsertStatus::ON) {
-    digitalWrite(2, HIGH);
-  } else {
-    digitalWrite(2, LOW);
-  }
+  // if(extraInsert.getStatus(mux) == cityInsertStatus::ON) {
+  //   digitalWrite(2, HIGH);
+  // } else {
+  //   digitalWrite(2, LOW);
+  // }
 
   if(mux.read(13) > 800) {
     digitalWrite(4, HIGH);
@@ -106,15 +122,47 @@ void loop() {
     illuminateBottomStripWhite();
   }
 
+  // CE Destruction Jackpot Animation Trigger
+  // if (destructionAnimationOn == true) {
+  //   digitalWrite(8, HIGH);
+  // } else {
+  //   digitalWrite(8, LOW);
+  // }
+
+  // CE Heat Ray Spinner Animation Trigger
+  // if (heatRay.getStatus(mux) == cityInsertStatus::ON) {
+  //   digitalWrite(6, HIGH);
+  // } else {
+  //   digitalWrite(6, LOW);
+  // }
+
+  // CE Rodan
+  // if (rodan.getStatus(mux) == cityInsertStatus::ON) {
+  //   digitalWrite(12, HIGH);
+  // } else {
+  //   digitalWrite(12, LOW);
+  // }
+
+  // CE UFO
+  // if (saucerAttack.getStatus(mux) == cityInsertStatus::ON) {
+  //   digitalWrite(2, HIGH);
+  // } else {
+  //   digitalWrite(2, LOW);
+  // }
+
   if (redGI.getStatus(mux) == cityInsertStatus::ON && whiteGI.getStatus(mux) == cityInsertStatus::OFF) {  
     // allFire on for Destruction Jackpot
     neoPixelFireDisplayAll();
+  
+    // set output high for CE Desitruction JP display
+    digitalWrite(8, HIGH);
     if (millis() - previousMillis >= 15) {
         previousMillis = millis();
         pingPongFireAnimation();
         neopixel.show(); // Update the LED strip
     }
     setAllFirePanelsOn();
+
     bottomWhiteStripOn = false;
     middleWhiteStripOn = false;
   } else if (whiteGI.getStatus(mux) == cityInsertStatus::ON && destructionAnimationOn == true) {
@@ -135,6 +183,9 @@ void loop() {
   } else if (heatRay.getStatus(mux) == cityInsertStatus::ON) {
     middleWhiteStripOn = false;
     setAllFirePanelsOn();
+
+    // set output high for CE Desitruction HR display
+    digitalWrite(6, HIGH);
     // heatRay light show
     if (millis() - previousMillis >= 100) {
       // save the last time you blinked the LED
@@ -151,8 +202,6 @@ void loop() {
           neopixel.setPixelColor(i, 13, 35, 100);
         }
       }
-      // neoPixelBlueFireDisplayAll();
-
 
       //set bottom strip to white
       neopixel.fill(neopixel.Color(255, 200, 150), 0, 72);
@@ -160,6 +209,11 @@ void loop() {
       neopixel.show();
     }
   } else {
+    // Turn off CE Destruction JP and HR displays
+    digitalWrite(6, LOW); // Heatray
+    digitalWrite(8, LOW); // Heatray
+
+
     //Rodan
     if(rodan.getStatus(mux) == cityInsertStatus::ON) {
       // Rodan
@@ -167,9 +221,14 @@ void loop() {
         previousMillis = millis();
         pingPongAnimation();
         neopixel.show(); // Update the LED strip
+
+        // Set high for CD Rodan Display
+        digitalWrite(12, HIGH);
       }
     } else if (middleWhiteStripOn == false) {
       illuminateMiddleStripWhite();
+      // Set LOW to disable CE Rodan Display
+      digitalWrite(12, LOW);
     }
       
     if(ny.getStatus(mux) == cityInsertStatus::ON && heatRay.getStatus(mux) == cityInsertStatus::OFF) {
@@ -205,16 +264,20 @@ void loop() {
     };
   }
 
-// tokyo check is to keep saucer from only firing outside of gameplay
+  // tokyo check is to keep saucer from only firing outside of gameplay
   if (gameInPlay == true) {
-    if ((saucer.getStatus(mux) == cityInsertStatus::ON) && !ufoUpPosition) {
+    if ((saucerAttack.getStatus(mux) == cityInsertStatus::ON) && !ufoUpPosition) {
       servo.write(2400);
       ufoUpPosition = true;
-    } else if (saucer.getStatus(mux) == cityInsertStatus::OFF && saucerAttack.getStatus(mux) == cityInsertStatus::OFF) {
+      // set high for CE display
+      digitalWrite(2, HIGH);
+    } else if (saucerAttack.getStatus(mux) == cityInsertStatus::OFF && ufoUpPosition == true) {
       servo.write(600);
       ufoUpPosition = false;
+      // set LOW to turn off CE display
+      digitalWrite(2, LOW);
     }
-  } else if (saucer.getStatus(mux) == cityInsertStatus::OFF && saucerAttack.getStatus(mux) == cityInsertStatus::OFF) {
+  } else if (saucerAttack.getStatus(mux) == cityInsertStatus::OFF && ufoUpPosition == true) {
     servo.write(600);
     ufoUpPosition = false;
   }
