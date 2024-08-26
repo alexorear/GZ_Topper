@@ -280,6 +280,8 @@ void loop() {
   } else if (saucerAttack.getStatus(mux) == cityInsertStatus::OFF && ufoUpPosition == true) {
     servo.write(600);
     ufoUpPosition = false;
+    // set LOW to turn off CE display
+      digitalWrite(2, LOW);
   }
 }
 
