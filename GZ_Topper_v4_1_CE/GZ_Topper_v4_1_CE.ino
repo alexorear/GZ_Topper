@@ -100,13 +100,6 @@ void loop() {
 
   updateGameInPlayStatus();
 
-  //additional inputs for mux 13 and 15
-  // if(extraInsert.getStatus(mux) == cityInsertStatus::ON) {
-  //   digitalWrite(2, HIGH);
-  // } else {
-  //   digitalWrite(2, LOW);
-  // }
-
   if(mux.read(13) > 800) {
     digitalWrite(4, HIGH);
   } else {
@@ -121,35 +114,7 @@ void loop() {
     // white on bottom strip only
     illuminateBottomStripWhite();
   }
-
-  // CE Destruction Jackpot Animation Trigger
-  // if (destructionAnimationOn == true) {
-  //   digitalWrite(8, HIGH);
-  // } else {
-  //   digitalWrite(8, LOW);
-  // }
-
-  // CE Heat Ray Spinner Animation Trigger
-  // if (heatRay.getStatus(mux) == cityInsertStatus::ON) {
-  //   digitalWrite(6, HIGH);
-  // } else {
-  //   digitalWrite(6, LOW);
-  // }
-
-  // CE Rodan
-  // if (rodan.getStatus(mux) == cityInsertStatus::ON) {
-  //   digitalWrite(12, HIGH);
-  // } else {
-  //   digitalWrite(12, LOW);
-  // }
-
-  // CE UFO
-  // if (saucerAttack.getStatus(mux) == cityInsertStatus::ON) {
-  //   digitalWrite(2, HIGH);
-  // } else {
-  //   digitalWrite(2, LOW);
-  // }
-
+ 
   if (redGI.getStatus(mux) == cityInsertStatus::ON && whiteGI.getStatus(mux) == cityInsertStatus::OFF) {  
     // allFire on for Destruction Jackpot
     neoPixelFireDisplayAll();
