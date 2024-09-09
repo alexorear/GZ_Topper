@@ -32,7 +32,7 @@ CityInsert tokyo = CityInsert(1, 600);
 CityInsert ny = CityInsert(2, 600);
 CityInsert london = CityInsert(3, 600);
 
-CityInsert extraInsert = CityInsert(12, 600);
+CityInsert extraInsert = CityInsert(12, 0);
 
 //heatRay, activated by middle spinner
 CityInsert heatRay = CityInsert(15, 300);
@@ -98,9 +98,10 @@ void loop() {
   bridgeInsert.update(mux);
   powerlineInsert.update(mux);
 
+
   updateGameInPlayStatus();
 
-  if(mux.read(13) > 800) {
+  if(extraInsert.getStatus(mux) == cityInsertStatus::ON) {
     digitalWrite(4, HIGH);
   } else {
     digitalWrite(4, LOW);
@@ -109,6 +110,7 @@ void loop() {
   if (bottomWhiteStripOn == false && 
     rodan.getStatus(mux) == cityInsertStatus::OFF && 
     allMonsterMonitorsLit() == false &&
+    heatRay.getStatus(mux) == cityInsertStatus::OFF &&
     !(redGI.getStatus(mux) == cityInsertStatus::ON && whiteGI.getStatus(mux) == cityInsertStatus::OFF) &&
     !destructionAnimationOn) {
     // white on bottom strip only
@@ -158,19 +160,24 @@ void loop() {
       if (ledState == LOW) {
         ledState = HIGH;
 
-        for(int i = 72; i < neopixel.numPixels(); i++) {
-          neopixel.setPixelColor(i, 0, 0, 0);
+        for(int i = 144; i < neopixel.numPixels(); i++) {
+          // neopixel.setPixelColor(i, 0, 0, 0);
+          neopixel.fill(neopixel.Color(0, 0, 0), 0, 144);
         }
       } else {
         ledState = LOW;
-        for(int i = 72; i < neopixel.numPixels(); i++) {
-          neopixel.setPixelColor(i, 13, 35, 100);
+        for(int i = 144; i < neopixel.numPixels(); i++) {
+          // neopixel.setPixelColor(i, 13, 35, 100);
+          neopixel.fill(neopixel.Color(13, 35, 100), 0, 144);
         }
       }
 
       //set bottom strip to white
-      neopixel.fill(neopixel.Color(255, 200, 150), 0, 72);
-      bottomWhiteStripOn = true;
+      // neopixel.fill(neopixel.Color(255, 200, 150), 0, 72);
+      // bottomWhiteStripOn = true;
+
+      bottomWhiteStripOn = false;
+      middleWhiteStripOn = false;
       neopixel.show();
     }
   } else {
@@ -251,7 +258,7 @@ void loop() {
 }
 
 void illuminateMiddleStripWhite() {
-  neopixel.fill(neopixel.Color(75, 44, 36), 72, 72); // starts at light 72 and has a count of 72, which would end on light 144
+  neopixel.fill(neopixel.Color(225, 132, 108), 72, 72); // starts at light 72 and has a count of 72, which would end on light 144
   neopixel.show();
   middleWhiteStripOn = true;
 }
